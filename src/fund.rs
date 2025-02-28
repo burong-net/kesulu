@@ -2,15 +2,12 @@ use reqwest;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-// use futures::executor::block_on;
 
-// 定义一个结构体来表示基金信息
-#[derive(Debug, Deserialize)]
-struct Fund {
-    code: String,
-    name: String,
-    // 添加其他字段...
-}
+// #[derive(Debug, Deserialize)]
+// struct Fund {
+//     code: String,
+//     name: String,
+// }
 
 // 构造查询参数
 fn build_params() -> HashMap<&'static str, &'static str> {
@@ -40,7 +37,6 @@ fn build_headers() -> Result<reqwest::header::HeaderMap, Box<dyn std::error::Err
     Ok(headers)
 }
 
-// 搜索基金信息，改成异步函数
 pub async fn search() -> Result<Value, Box<dyn std::error::Error>> {
     // 创建一个新的异步HTTP客户端
     let client = reqwest::Client::new();
