@@ -3,11 +3,13 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-// #[derive(Debug, Deserialize)]
-// struct Fund {
-//     code: String,
-//     name: String,
-// }
+#[derive(Debug, Deserialize)]
+struct Fund {
+    code: String,
+    name: String,
+}
+
+
 
 // 构造查询参数
 fn build_params() -> HashMap<&'static str, &'static str> {
@@ -37,7 +39,40 @@ fn build_headers() -> Result<reqwest::header::HeaderMap, Box<dyn std::error::Err
     Ok(headers)
 }
 
-pub async fn search() -> Result<Value, Box<dyn std::error::Error>> {
+pub async fn fund_list() -> Result<Value, Box<dyn std::error::Error>> {
+    // 创建一个新的异步HTTP客户端
+    let client = reqwest::Client::new();
+    // 定义请求的URL
+    let url = "https://fundmobapi.eastmoney.com/FundMApi/FundNetList.ashx";
+
+    // 构造查询参数
+    let mut params = build_params();
+    params.insert("fundtype", "0");
+
+    // 构造请求头
+    let headers = build_headers()?;
+
+    // 发送异步GET请求并包含查询参数和请求头
+    let response = client
+       .get(url)
+       .query(&params) // 添加查询参数
+       .headers(headers) // 设置请求头
+       .send()
+       .await?; // 等待请求完成
+
+    // 检查响应状态码是否为成功（200 - 299）
+    if response.status().is_success() {
+        // 处理成功的响应体
+        let body = response.text().await?;
+        // 解析响应体为JSON
+        let json: Value = serde_json::from_str(&body)?;
+        Ok(json)
+    } else {
+        Err(format!("Request failed with status code: {}", response.status()).into())
+    }
+}
+
+pub async fn fund_search() -> Result<Value, Box<dyn std::error::Error>> {
     // 创建一个新的异步HTTP客户端
     let client = reqwest::Client::new();
 

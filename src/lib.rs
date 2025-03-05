@@ -2,6 +2,7 @@ pub mod data_provider;
 pub mod models;
 pub mod tailwind;
 pub mod app;
+pub mod fund;
 
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]
