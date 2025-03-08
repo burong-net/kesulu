@@ -1,92 +1,72 @@
-use crate::models::{Brewery, MetaResponse};
-use gloo_net::http::Request;
+use crate::models::*;
 use leptos_struct_table::{ColumnSort, PaginatedTableDataProvider};
 use std::collections::VecDeque;
+use crate::fund::*;
+use serde::{Serialize, Deserialize};
 
-pub struct BreweryDataProvider {
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct FundDataProvider {
     sorting: VecDeque<(usize, ColumnSort)>,
+    funds: Vec<Fund>,
+    total_count: usize,
 }
 
-impl Default for BreweryDataProvider {
+impl Default for FundDataProvider {
     fn default() -> Self {
         Self {
             sorting: VecDeque::new(),
+            funds: vec![],
+            total_count: 0,
         }
     }
 }
 
-impl BreweryDataProvider {
-    fn url_sort_param_for_column(&self, column: usize) -> &'static str {
-        match column {
-            0 => "name",
-            1 => "brewery_type",
-            2 => "city",
-            3 => "country",
-            _ => "",
-        }
-    }
+impl FundDataProvider {
+    pub async fn new() -> Result<Self, String> {
 
-    fn url_sort_param_for_sort_pair(&self, pair: &(usize, ColumnSort)) -> String {
-        let col = self.url_sort_param_for_column(pair.0);
-
-        let dir = match pair.1 {
-            ColumnSort::Ascending => "asc",
-            ColumnSort::Descending => "desc",
-            ColumnSort::None => return "".to_string(),
+        let (mut funds, total_count)= match fund_list(1).await  {
+            Ok((funds, total)) => (funds, total),
+            Err(e) => return Err(e.to_string()),
         };
 
-        format!("sort={}:{}", col, dir)
-    }
-
-    fn get_url(&self, page_index: usize) -> String {
-        let mut sort = String::new();
-        for pair in &self.sorting {
-            sort.push_str(&self.url_sort_param_for_sort_pair(pair));
+        let pages = 5;
+        for i in 1..=pages {
+            let (resp, _) = match fund_list(i).await  {
+                Ok((funds, _)) => (funds, total_count),
+                Err(e) => return Err(e.to_string()),
+            };
+            funds.extend(resp);
         }
 
-        format!(
-                "https://api.openbrewerydb.org/v1/breweries?{sort}&page={}&per_page={}",
-                page_index + 1,
-                Self::PAGE_ROW_COUNT,
-            )
+        Ok(Self {
+            sorting: VecDeque::new(),
+            funds,
+            total_count: 150,
+        })
+        
     }
 }
 
-impl PaginatedTableDataProvider<Brewery> for BreweryDataProvider {
-    const PAGE_ROW_COUNT: usize = 200;
+impl PaginatedTableDataProvider<Fund> for FundDataProvider {
+    const PAGE_ROW_COUNT: usize = 30;
 
-    async fn get_page(&self, page_index: usize) -> Result<Vec<Brewery>, String> {
-        if page_index >= 10000 / Self::PAGE_ROW_COUNT {
+    async fn get_page(&self, page_index: usize) -> Result<Vec<Fund>, String> {
+        if page_index > self.total_count / Self::PAGE_ROW_COUNT {
             return Ok(vec![]);
         }
 
-        let url = self.get_url(page_index);
+        let start  = page_index * Self::PAGE_ROW_COUNT;
+        let end    = start + Self::PAGE_ROW_COUNT;
 
-        let resp: Vec<Brewery> = Request::get(&url)
-            .send()
-            .await
-            .map_err(|e| e.to_string())?
-            .json()
-            .await
-            .map_err(|e| e.to_string())?;
-
-        Ok(resp)
+        Ok(self.funds[start..end].to_vec())
     }
 
     async fn row_count(&self) -> Option<usize> {
-        let resp: Option<MetaResponse> = Request::get("https://api.openbrewerydb.org/v1/breweries/meta")
-            .send()
-            .await
-            .map_err(|e| e.to_string())
-            .ok()?
-            .json()
-            .await
-            .map_err(|e| e.to_string())
-            .ok()?;
+        Some(self.total_count)
+    }
 
-        let count = resp.map(|r| r.total)?.parse::<usize>().ok()?;
-
-        Some(count)
+    async fn page_count(&self) -> Option<usize> {
+        Some((self.total_count / Self::PAGE_ROW_COUNT) + 1)
     }
 
     fn set_sorting(&mut self, sorting: &VecDeque<(usize, ColumnSort)>) {

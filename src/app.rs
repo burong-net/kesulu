@@ -1,32 +1,52 @@
-use crate::data_provider::BreweryDataProvider;
+use crate::data_provider::FundDataProvider;
 use leptos::prelude::*;
 use leptos_struct_table::*;
 
 
 #[component]
 pub fn App() -> impl IntoView {
-    let rows = BreweryDataProvider::default();
-
     let pagination_controller = PaginationController::default();
 
+    let res = Resource::new(
+        || (),
+        |_| async move {
+            match FundDataProvider::new().await {
+                Ok(provider) => Some(provider),
+                Err(_) => None,
+            }
+        },
+    );
+
     view! {
-        <div class="rounded-md overflow-clip m-10 border dark:border-gray-700".to_string()>
-            <table class="text-sm text-left text-gray-500 dark:text-gray-400 mb-[-1px] w-[calc(100vw-5rem)]">
-                <TableContent
-                    rows=rows
-                    scroll_container="html"
-                    sorting_mode=SortingMode::SingleColumn
-                    display_strategy=DisplayStrategy::Pagination {
-                        controller: pagination_controller,
-                        row_count: 10,
-                    }
-                />
-
-            </table>
-        </div>
-
-        <Paginator pagination_controller />
+        <Suspense fallback=|| {
+            "Loading comments..."
+        }>
+            {move || Suspend::new(async move {
+                let rows = res.await.unwrap_or(FundDataProvider::default());
+                view! {
+                    <div class="rounded-md overflow-clip m-10 border dark:border-gray-700">
+                        <table class="text-sm text-left text-gray-500 dark:text-gray-400 mb-[-1px] w-[calc(100vw-5rem)]">
+                            <TableContent
+                                rows=rows
+                                scroll_container="html"
+                                sorting_mode=SortingMode::SingleColumn
+                                display_strategy=DisplayStrategy::Pagination {
+                                    controller: pagination_controller,
+                                    row_count: 30,
+                                }
+                            />
+                        </table>
+                    </div>
+                    <Paginator pagination_controller />
+                }
+            })}
+        </Suspense>
     }
+
+
+
+
+
 }
 
 #[component]

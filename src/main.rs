@@ -4,6 +4,7 @@ pub mod models;
 pub mod tailwind;
 pub mod app;
 
+
 use app::*;
 use leptos::prelude::*;
 use leptos_meta::MetaTags;

@@ -1,15 +1,7 @@
 use reqwest;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::collections::HashMap;
-
-#[derive(Debug, Deserialize)]
-struct Fund {
-    code: String,
-    name: String,
-}
-
-
+use crate::models::*;
+use leptos::prelude::*;
 
 // 构造查询参数
 fn build_params() -> HashMap<&'static str, &'static str> {
@@ -24,13 +16,11 @@ fn build_params() -> HashMap<&'static str, &'static str> {
     params.insert("ServerVersion", "6.5.5");
     params.insert("Version", "6.5.5");
     params.insert("appVersion", "6.5.5");
-    params.insert("m", "1");
-    params.insert("key", "110003");
     params
 }
 
 // 构造请求头
-fn build_headers() -> Result<reqwest::header::HeaderMap, Box<dyn std::error::Error>> {
+fn build_headers() -> Result<reqwest::header::HeaderMap, ServerFnError> {
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert(
         "validmark",
@@ -39,7 +29,8 @@ fn build_headers() -> Result<reqwest::header::HeaderMap, Box<dyn std::error::Err
     Ok(headers)
 }
 
-pub async fn fund_list() -> Result<Value, Box<dyn std::error::Error>> {
+#[server]
+pub async fn fund_list(page_index: usize) -> Result<(Vec<Fund>, usize), ServerFnError> {
     // 创建一个新的异步HTTP客户端
     let client = reqwest::Client::new();
     // 定义请求的URL
@@ -47,7 +38,13 @@ pub async fn fund_list() -> Result<Value, Box<dyn std::error::Error>> {
 
     // 构造查询参数
     let mut params = build_params();
+    let page_index = page_index.to_string();
+    // let page_size = page_size.to_string();
     params.insert("fundtype", "0");
+    params.insert("SortColum", "RDZF");
+    params.insert("Sort", "desc");
+    params.insert("pageIndex", page_index.as_str());
+    // params.insert("pageSize", page_size.as_str());
 
     // 构造请求头
     let headers = build_headers()?;
@@ -65,42 +62,10 @@ pub async fn fund_list() -> Result<Value, Box<dyn std::error::Error>> {
         // 处理成功的响应体
         let body = response.text().await?;
         // 解析响应体为JSON
-        let json: Value = serde_json::from_str(&body)?;
-        Ok(json)
+        let res: ApiResponse =  serde_json::from_str(&body)?;
+        Ok((res.datas, res.total_count))
     } else {
-        Err(format!("Request failed with status code: {}", response.status()).into())
-    }
-}
-
-pub async fn fund_search() -> Result<Value, Box<dyn std::error::Error>> {
-    // 创建一个新的异步HTTP客户端
-    let client = reqwest::Client::new();
-
-    // 定义请求的URL
-    let url = "https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx";
-
-    // 构造查询参数
-    let params = build_params();
-
-    // 构造请求头
-    let headers = build_headers()?;
-
-    // 发送异步GET请求并包含查询参数和请求头
-    let response = client
-       .get(url)
-       .query(&params) // 添加查询参数
-       .headers(headers) // 设置请求头
-       .send()
-       .await?; // 等待请求完成
-
-    // 检查响应状态码是否为成功（200 - 299）
-    if response.status().is_success() {
-        // 处理成功的响应体
-        let body = response.text().await?;
-        // 解析响应体为JSON
-        let json: Value = serde_json::from_str(&body)?;
-        Ok(json)
-    } else {
-        Err(format!("Request failed with status code: {}", response.status()).into())
+        let err_msg = format!("Request failed with status code: {}", response.status());
+        Err(ServerFnError::new(err_msg))
     }
 }
