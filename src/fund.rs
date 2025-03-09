@@ -2,6 +2,7 @@ use reqwest;
 use std::collections::HashMap;
 use crate::models::*;
 use leptos::prelude::*;
+use tracing::{instrument, info};
 
 // 构造查询参数
 fn build_params() -> HashMap<&'static str, &'static str> {
@@ -30,6 +31,7 @@ fn build_headers() -> Result<reqwest::header::HeaderMap, ServerFnError> {
 }
 
 #[server]
+#[instrument]
 pub async fn fund_list(page_index: usize) -> Result<(Vec<Fund>, usize), ServerFnError> {
     // 创建一个新的异步HTTP客户端
     let client = reqwest::Client::new();
@@ -63,6 +65,7 @@ pub async fn fund_list(page_index: usize) -> Result<(Vec<Fund>, usize), ServerFn
         let body = response.text().await?;
         // 解析响应体为JSON
         let res: ApiResponse =  serde_json::from_str(&body)?;
+        info!("total count: {:?}", res.total_count);
         Ok((res.datas, res.total_count))
     } else {
         let err_msg = format!("Request failed with status code: {}", response.status());

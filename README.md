@@ -1,50 +1,20 @@
-<picture>
-    <source srcset="https://raw.githubusercontent.com/leptos-rs/leptos/main/docs/logos/Leptos_logo_Solid_White.svg" media="(prefers-color-scheme: dark)">
-    <img src="https://raw.githubusercontent.com/leptos-rs/leptos/main/docs/logos/Leptos_logo_RGB.svg" alt="Leptos Logo">
-</picture>
 
-# Leptos Axum Starter Template
-
-This is a template for use with the [Leptos](https://github.com/leptos-rs/leptos) web framework and the [cargo-leptos](https://github.com/akesson/cargo-leptos) tool using [Axum](https://github.com/tokio-rs/axum).
-
-## Creating your template repo
-
-If you don't have `cargo-leptos` installed you can install it with
+# Kesulu
 
 ```bash
-cargo install cargo-leptos --locked
+cargo leptos new --git https://github.com/leptos-rs/start-axum
+cargo install trunk
+cargo install cargo-generate
+cargo install cargo-leptos
+pnpm install -D tailwindcss
+rustup target add wasm32-unknown-unknown
 ```
-
-Then run
-```bash
-cargo leptos new --git https://github.com/leptos-rs/start-axum-0.7
-```
-
-to generate a new project template.
-
-```bash
-cd kesulu
-```
-
-to go to your newly created project.  
-Feel free to explore the project structure, but the best place to start with your application code is in `src/app.rs`.  
-Addtionally, Cargo.toml may need updating as new versions of the dependencies are released, especially if things are not working after a `cargo update`.
 
 ## Running your project
 
 ```bash
-cargo leptos watch
+cargo-leptos watch --hot-reload
 ```
-
-## Installing Additional Tools
-
-By default, `cargo-leptos` uses `nightly` Rust, `cargo-generate`, and `sass`. If you run into any trouble, you may need to install one or more of these tools.
-
-1. `rustup toolchain install nightly --allow-downgrade` - make sure you have Rust nightly
-2. `rustup target add wasm32-unknown-unknown` - add the ability to compile Rust to WebAssembly
-3. `cargo install cargo-generate` - install `cargo-generate` binary (should be installed automatically in future)
-4. `npm install -g sass` - install `dart-sass` (should be optional in future
-5. Run `npm install` in end2end subdirectory before test
 
 ## Compiling for Release
 ```bash
@@ -85,33 +55,3 @@ export LEPTOS_SITE_ADDR="127.0.0.1:3000"
 export LEPTOS_RELOAD_PORT="3001"
 ```
 Finally, run the server binary.
-
-## Licensing
-
-This template itself is released under the Unlicense. You should replace the LICENSE for your own application with an appropriate license if you plan to release it publicly.
-
-
-### Example that shows how to use pagination with a table.
-
-To make this example work, you must download / fork the whole repo because this is in the Cargo.toml: `leptos-struct-table = { path = "../.." }`.
-
-If you don't have it installed already, install [Trunk](https://trunkrs.dev/) 
-as well as the wasm32-unknown-unknown target:
-
-```bash
-cargo install trunk
-npm install -D tailwindcss
-rustup target add wasm32-unknown-unknown
-```
-
-Then, open two terminals. In the first one, run:
-
-```
-npx tailwindcss -i ./input.css -o ./style/output.css --watch
-```
-
-In the second one, run:
-
-```bash
-trunk serve --open
-```

@@ -4,6 +4,8 @@ use std::collections::VecDeque;
 use crate::fund::*;
 use serde::{Serialize, Deserialize};
 
+// pub static mut FUNDS: Vec::<Fund>  = vec![];
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct FundDataProvider {
     sorting: VecDeque<(usize, ColumnSort)>,
